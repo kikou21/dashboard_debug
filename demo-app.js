@@ -1,3 +1,27 @@
+ajouter 
+else {
+  const payload = JSON.stringify({ user });
+
+  // 🛑 Stoppe immédiatement le keepAlive pour éviter les requêtes concurrentes
+  if (window.keepAliveIntervalId) {
+    clearInterval(window.keepAliveIntervalId);
+    console.log("⏹️ KeepAlive arrêté avant fermeture.");
+  }
+
+  try {
+    navigator.sendBeacon(`${dashboard_url}/disconnect`, payload);
+  } catch (e) {
+    fetch(`${dashboard_url}/disconnect`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: payload,
+      keepalive: true
+    }).catch(() => {});
+  }
+}
+
+
+
 // ---------------- Configuration ----------------
 const dashboard_url = "xxxxxxxxxxxxxxxxxx.fr";
 
