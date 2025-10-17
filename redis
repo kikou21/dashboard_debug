@@ -1,0 +1,98 @@
+deployment
+{{- if .Values.redis.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-redis
+  labels:
+    app: {{ .Release.Name }}-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-redis
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-redis
+    spec:
+      containers:
+        - name: redis
+          image: "{{ .Values.redis.image }}:{{ .Values.redis.image.tag }}"
+          imagePullPolicy: {{ .Values.redis.image.pullPolicy | quote }}
+          ports:
+            - containerPort: {{ .Values.service.redis.port }}
+          env:
+            - name: REDIS_APPENDONLY
+              value: "yes"
+            - name: REDIS_SAVE
+              value: "900 1 600 10 60 1000"
+            - name: REDIS_MAXMEMORY
+              value: "100mb"
+            - name: REDIS_MAXMEMORY_POLICY
+              value: keys-lru"
+            - name: REDIS_TIMEOUT
+              value:"86400"
+          volumeMounts:
+            - name: redis-data
+              mountPath: {{ .Values.persistence.mountPath }}
+      volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-redis-pvc
+{{- end }}
+
+values.yaml extrait
+
+redis:
+  enabled: true
+  image: redis
+  tag: 7.2-alpine
+  pullPolicy: IfNotPresent
+  persistence:
+    enabled: true
+    accessModes: ["ReadWriteOnce"]
+    size: 1Gi
+    mount_path: /data/redis
+    policy: Retain
+--
+service:
+  dashboard:
+    name: dashboard
+    port: 5000
+  demo:
+    name: demo-app
+    port: 8080
+  redis:
+    name: redis
+    port: 6379
+
+pv
+{{- if .Values.redis.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Release.Name }}-redis-pv
+spec:
+  capacity:
+    storage: {{ .Values.redis.persistence.size }} 
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: {{ .Values.redis.persistence.path }}
+  persistentVolumeReclaimPolicy: {{ .Values.redis.persistence.policy }}
+{{- end }}
+
+pvc
+{{- if .Values.redis.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-redis-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.redis.persistence.size }}
+{{- end }}
