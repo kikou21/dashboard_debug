@@ -1,0 +1,68 @@
+Parfait ✅ — voici un README.md minimal et clair uniquement pour documenter les variables d’environnement (env) ajoutées à ton Redis Deployment.
+
+
+---
+
+⚙️ Variables d’environnement Redis
+
+Ces variables d’environnement sont définies dans le fichier
+templates/redis-deployment.yaml
+et configurent le comportement de Redis côté conteneur.
+
+Elles ont été ajoutées pour améliorer :
+
+la gestion de la mémoire,
+
+la durée de vie des clés,
+
+et la persistance des sessions sur disque.
+
+
+
+---
+
+🧩 Variables utilisées
+
+Nom de la variable	Valeur	Description
+
+REDIS_APPENDONLY	"no"	Désactive le mode AOF (Append Only File) pour éviter des écritures constantes sur disque (meilleure performance).
+REDIS_SAVE	""	Désactive la persistance automatique (snapshots .rdb), les sauvegardes sont manuelles.
+REDIS_MAXMEMORY	"100mb"	Limite la taille mémoire utilisée par Redis.
+REDIS_MAXMEMORY_POLICY	"allkeys-lru"	Politique d’éviction : supprime les clés les moins récemment utilisées quand la limite mémoire est atteinte.
+REDIS_TIMEOUT	"86400"	Durée maximale (en secondes) avant qu’une connexion inerte soit fermée — ici, 24 heures.
+
+
+
+---
+
+🧱 Exemple dans redis-deployment.yaml
+
+env:
+  - name: REDIS_APPENDONLY
+    value: "no"
+  - name: REDIS_SAVE
+    value: ""
+  - name: REDIS_MAXMEMORY
+    value: "100mb"
+  - name: REDIS_MAXMEMORY_POLICY
+    value: "allkeys-lru"
+  - name: REDIS_TIMEOUT
+    value: "86400"
+
+
+---
+
+💡 Notes
+
+Ces paramètres sont sans impact sur le code Flask : ils agissent uniquement sur Redis.
+
+Tu peux ajuster REDIS_TIMEOUT (par exemple 43200 pour 12 h ou 604800 pour 7 jours).
+
+Le volume /data/redis est monté depuis le PVC pour conserver les données Redis même après redéploiement.
+
+
+
+---
+
+Souhaites-tu que je t’ajoute juste en dessous un petit tableau de tuning recommandé (ex: “pour dév”, “pour préprod”, “pour prod”) ?
+
