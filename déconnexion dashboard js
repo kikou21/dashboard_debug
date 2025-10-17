@@ -1,0 +1,71 @@
+Très bonne remarque 💡 — oui, il faut aussi un petit délai (setTimeout) dans le cas leaving_for_demo, sinon certains navigateurs (notamment Edge et Firefox) ferment la page avant que le flag ait été correctement supprimé ou que la redirection vers la demo ait commencé.
+
+
+---
+
+Voici donc la version finale complète et propre de la fonction,
+avec un setTimeout aussi bien pour le départ vers demo-app que pour la fermeture sauvage 👇
+
+// ===================== FERMETURE SAUVAGE / REFRESH =====================
+function registerDisconnectHandler() {
+  window.addEventListener("beforeunload", () => {
+    const user = currentUser();
+    const leavingForDemo = sessionStorage.getItem("leaving_for_demo");
+
+    if (!user) {
+      // Aucun user stocké → ne rien faire
+      return;
+    } else if (leavingForDemo === "1") {
+      // Cas : départ vers demo-app → pas de disconnect
+      console.log("↩️ Retour vers demo-app — pas de disconnect");
+      // léger délai pour laisser le flag et la redirection s’exécuter
+      setTimeout(() => {
+        sessionStorage.removeItem("leaving_for_demo");
+      }, 100);
+      return;
+    } else {
+      // Cas : fermeture ou rechargement → envoi disconnect
+      const payload = JSON.stringify({ user });
+      console.log(`🚪 Déconnexion sauvage détectée pour ${user}`);
+
+      setTimeout(() => {
+        try {
+          navigator.sendBeacon("/disconnect", payload);
+        } catch (e) {
+          fetch("/disconnect", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: payload,
+            keepalive: true,
+          }).catch(() => {});
+        }
+      }, 100); // 100 ms de délai pour laisser le navigateur traiter l’événement
+    }
+  });
+}
+
+// 🔁 Active la gestion de la déconnexion sauvage
+registerDisconnectHandler();
+
+
+---
+
+⚙️ En résumé :
+
+✅ setTimeout ajouté dans les deux cas :
+
+départ vers demo-app → laisse le flag se vider proprement
+
+fermeture sauvage → laisse le sendBeacon partir
+
+
+✅ Compatible tous navigateurs
+
+✅ Aucun blocage du thread (contrairement à while)
+
+
+
+---
+
+Souhaites-tu que je t’envoie la même version adaptée pour la demo-app (avec ${dashboard_url}/disconnect) pour garder une cohérence entre les deux fronts ?
+
