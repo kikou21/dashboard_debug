@@ -1,55 +1,59 @@
-Parfait 👍
-Voici juste les lignes à ajouter ou modifier dans ta route /disconnect, sans tout recopier :
+Excellent réflexe ✅
+Oui, tu peux appeler directement ta route /reset-demo-app depuis la route /disconnect, plutôt que de réécrire la logique Kubernetes à l’intérieur.
+C’est plus propre, plus court et surtout plus maintenable.
 
 
 ---
 
-🟢 À ajouter après :
+⚙️ Voici les seules lignes à ajouter
+
+Dans ta fonction /disconnect,
+juste après :
 
 app.logger.info(f"[logout] {username} déconnecté manuellement ")
 
 ➡️ ajoute :
 
-# 🔁 Réinitialise la demo-app pour ce user
+# 🔁 Appelle directement la route /reset-demo-app pour ce user
 try:
-    ns = get_namespace(username)
-    api = client.AppsV1Api()
-    name = f"{RELEASE_NAME}-demo-app-{username}"
-    api.patch_namespaced_deployment_scale(name, ns, {"spec": {"replicas": 1}})
-    app.logger.info(f"[logout] Demo-app de {username} réinitialisée à 1 pod")
+    requests.post("http://localhost:5000/reset-demo-app", json={"user": username})
+    app.logger.info(f"[logout] Demo-app de {username} réinitialisée via /reset-demo-app")
 except Exception as e:
-    app.logger.warning(f"[logout] Reset demo-app échoué pour {username}: {e}")
+    app.logger.warning(f"[logout] Échec de l'appel /reset-demo-app pour {username}: {e}")
 
-
----
-
-🟡 Et à ajouter aussi après :
+Et pareil pour la fermeture sauvage :
+après :
 
 r.set(f"user:{username}:closed_at", ts)
 app.logger.info(f"[disconnect] Clés Redis supprimées pour {username} (fermeture sauvage t)closed_at={ts}")
 
-➡️ ajoute juste après :
+➡️ ajoute :
 
-# 🧹 Optionnel : reset aussi la demo-app en cas de fermeture sauvage
+# 🧹 Réinitialisation auto de la demo-app après fermeture sauvage
 try:
-    ns = get_namespace(username)
-    api = client.AppsV1Api()
-    name = f"{RELEASE_NAME}-demo-app-{username}"
-    api.patch_namespaced_deployment_scale(name, ns, {"spec": {"replicas": 1}})
-    app.logger.info(f"[disconnect] Demo-app de {username} réinitialisée à 1 pod après fermeture sauvage")
+    requests.post("http://localhost:5000/reset-demo-app", json={"user": username})
+    app.logger.info(f"[disconnect] Demo-app de {username} réinitialisée via /reset-demo-app (fermeture sauvage)")
 except Exception as e:
-    app.logger.warning(f"[disconnect] Reset demo-app échoué (fermeture sauvage) pour {username}: {e}")
+    app.logger.warning(f"[disconnect] Échec de l'appel /reset-demo-app (fermeture sauvage) pour {username}: {e}")
 
 
 ---
 
-👉 Rien d’autre à toucher.
-Tu gardes tout le reste du code identique.
+🧩 N’oublie pas
 
-Ça permet à Flask de réinitialiser la demo-app côté serveur aussi bien :
+Il faut importer requests en haut du fichier si ce n’est pas déjà fait :
 
-quand l’utilisateur clique sur Déconnexion
+import requests
 
-que lors d’une fermeture sauvage (via sendBeacon).
 
+---
+
+💡 Avantage :
+
+plus simple (une seule source de vérité dans /reset-demo-app)
+
+et Flask s’appelle lui-même proprement en local (localhost:5000 fonctionne dans le même pod).
+
+
+Souhaites-tu que je t’indique comment faire si ton dashboard est dans un autre conteneur (pour adapter l’URL interne du requests.post au service Kubernetes) ?
 
