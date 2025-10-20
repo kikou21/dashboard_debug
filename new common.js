@@ -1,6 +1,6 @@
 //Fonction pour récupérer le user courant pour le stocker dans session
 function currentUser(){
-  return sessionStorage.getItem("user");
+  return sessionStorage.getItem("user").toLowerCase();
 }
 
 // Fonction pour recommencer les exercices
@@ -99,9 +99,9 @@ function registerDisconnectHandler() {
       // Aucun user: ne rien faire
       return;
     } else if (leavingForDemo === "1") {
-      // Cdépart vers demo-app → pas de disconnect (pris également en charge par document.addEventLitender)
+      // départ vers demo-app → pas de disconnect (pris en charge par document.addEventLitender en bas)
       console.log(" Retour vers demo-app — pas de disconnect");
-      // léger délai pour laisser le flag et la redirection s’exécuter
+      // Délai un dizième de seconde pour laisser le flag et la redirection s’exécuter
       setTimeout(() => {
         sessionStorage.removeItem("leaving_for_demo");
       }, 100);
@@ -154,6 +154,7 @@ function resetInactivityTimer() {
   warningTimer = setTimeout(() => {
     banner.style.display = "block";
   }, WARNING_DELAY);
+
 //Déconnexion automatique à 10 minutes
   inactivityTimer = setTimeout(() => {
     banner.style.display = "none";
@@ -168,7 +169,7 @@ function resetInactivityTimer() {
   window.addEventListener(evt, resetInactivityTimer)
 );
 
-// ------------------- KeepAlive  déconnexion sauvage -------------------
+//  KeepAlive mise à jour des clés toutes les 30 secondes - surveille qui est encore connecté -------------------
 const KEEPALIVE_INTERVAL = 30000; // 30 secondes
 
 function sendKeepAlive() {
@@ -184,6 +185,8 @@ function sendKeepAlive() {
 }
 
   //*******************fin du keepAlive  */
+
+
 // --------Gère la fermeture ou le rechargement du dashboard lorsqu'il va sur demo-app pour prévenir suppression connected redis-------------------
 document.addEventListener("DOMContentLoaded", () => {
   // Ici bloc openUrl/addEventListener sur les liens qui vont vers demo-ap
@@ -205,24 +208,20 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-
 // Envoie un ping toutes les 30s tant que la page est ouverte
-setInterval(sendKeepAlive, KEEPALIVE_INTERVAL);
-
-//premier ping immédiat dès que user connecté
-/* const user = currentUser();
-if (sessionStorage.user) {
-sendKeepAlive();
-}else{
-  //si session pas encore prête retente après 1 s
-  setTimeout(() => { 
-    if (sessionStorage.user) 
-      sendKeepAlive(); 
-   }, 1000);
-} */
+function waitForUserAndStartKeepAlive() {
+  if (currentUser()) {
+    sendKeepAlive();
+    setInterval(sendKeepAlive, KEEPALIVE_INTERVAL);
+  } else {
+    console.log("⏳ En attente de session utilisateur...");
+    setTimeout(waitForUserAndStartKeepAlive, 1000);
+  }
+}
 
 
-// Tentative de notification quand l'utilisateur ferme brutalement la fenêtre
+
+// Tentative de notification quand l'utilisateur ferme brutalement la fenêtre si activé ne permet plus de changer d'onglet et revenirsur certains nav
 /* window.addEventListener("visibilitychange", () => {
   const user = currentUser();
   if (document.visibilityState === "hidden" && user) {
@@ -235,5 +234,9 @@ sendKeepAlive();
 
 //initialisation pour lancer le timer dès que la page s'ouvre
 resetInactivityTimer();
+
+//lance les ping et attend session utilisateur
+waitForUserAndStartKeepAlive();
+
 //Active la gestion de la deconnexion sauvage dès le chargement
 registerDisconnectHandler();
