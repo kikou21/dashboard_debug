@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Bienvenue sur l'espace de démonstration Kubernetes</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/welcome.css') }}">
+</head>
+<body>
+
+ <div class="container">  
+  <!-- <h1>Bienvenue dans l'espace de démonstration Kubernetes</h1>  -->
+  <h1>Bienvenue {{ username }} dans l'espace de démonstration Kubernetes</h1>
+  
+  <div class="intro">
+  <h2>Acculturation Kubernetes</h2>
+  <p>
+    Imaginez un <b>chef d’orchestre</b>. Son rôle est de coordonner chaque musicien pour que la symphonie soit parfaite.  
+    Kubernetes joue le même rôle : il coordonne différents composants afin de produire une symphonie harmonieuse d'applications.
+  </p>
+  <p>
+    Les musiciens = vos <b>pods</b> qui sont des petites boîtes qui contiennent un ou plusieurs conteneurs dans lesquels vos applications s'éxécutent.<br>
+    Le chef d’orchestre = <b>Kubernetes</b>. <br>
+    La partition = la <b>définition de vos applications</b> (Deployment, Services, etc.) au sein d'un namespace, espace de travail qui isole et organise les ressources dans Kubernetes.  
+  </p>
+  <p>
+    Avec Kubernetes, vous ne gérez pas chaque musicien séparément, 
+    vous donnez juste la partition, et il s’occupe du reste.
+  </p>
+  <img src="{{ url_for('static', filename='images/kubernetes.png') }}" alt="Kubernetes chef d'orchestre">
+  <div class="legal">Illustration générée par intelligence artificielle à des fins pédagogiques </div>
+
+  <p>Dans les exercices, on va jouer avec ce chef pour voir comment il réagit.</p>
+</div>
+
+    <div class="actions">
+      <a class="btn" href="{{ url_for('dashboard', username=username) }}">Commencer les exercices</a>
+    </div>
+  </div>
+    <!-- Script spécifique à la page -->
+  <script>
+     //stock la session
+      sessionStorage.setItem("user", username.toLowerCase());
+      console.log("session utilisateur stockée : ", "{{ username }}");
+    function loadSteps() {
+      console.log("Chargement des étapes...");
+      // logique spécifique à cette page
+    }
+    document.addEventListener("DOMContentLoaded", loadSteps);
+    
+    
+  </script>
+
+  <!-- Script commun (inactivité, reset, logout, etc.) -->
+  <script src="{{ url_for('static', filename='js/common.js') }}" defer></script>
+</body>
+</html>
