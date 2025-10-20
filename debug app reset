@@ -1,0 +1,55 @@
+Parfait 👍
+Voici juste les lignes à ajouter ou modifier dans ta route /disconnect, sans tout recopier :
+
+
+---
+
+🟢 À ajouter après :
+
+app.logger.info(f"[logout] {username} déconnecté manuellement ")
+
+➡️ ajoute :
+
+# 🔁 Réinitialise la demo-app pour ce user
+try:
+    ns = get_namespace(username)
+    api = client.AppsV1Api()
+    name = f"{RELEASE_NAME}-demo-app-{username}"
+    api.patch_namespaced_deployment_scale(name, ns, {"spec": {"replicas": 1}})
+    app.logger.info(f"[logout] Demo-app de {username} réinitialisée à 1 pod")
+except Exception as e:
+    app.logger.warning(f"[logout] Reset demo-app échoué pour {username}: {e}")
+
+
+---
+
+🟡 Et à ajouter aussi après :
+
+r.set(f"user:{username}:closed_at", ts)
+app.logger.info(f"[disconnect] Clés Redis supprimées pour {username} (fermeture sauvage t)closed_at={ts}")
+
+➡️ ajoute juste après :
+
+# 🧹 Optionnel : reset aussi la demo-app en cas de fermeture sauvage
+try:
+    ns = get_namespace(username)
+    api = client.AppsV1Api()
+    name = f"{RELEASE_NAME}-demo-app-{username}"
+    api.patch_namespaced_deployment_scale(name, ns, {"spec": {"replicas": 1}})
+    app.logger.info(f"[disconnect] Demo-app de {username} réinitialisée à 1 pod après fermeture sauvage")
+except Exception as e:
+    app.logger.warning(f"[disconnect] Reset demo-app échoué (fermeture sauvage) pour {username}: {e}")
+
+
+---
+
+👉 Rien d’autre à toucher.
+Tu gardes tout le reste du code identique.
+
+Ça permet à Flask de réinitialiser la demo-app côté serveur aussi bien :
+
+quand l’utilisateur clique sur Déconnexion
+
+que lors d’une fermeture sauvage (via sendBeacon).
+
+
