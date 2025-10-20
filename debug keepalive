@@ -1,0 +1,11 @@
+function waitForUserAndStartKeepAlive() {
+  if (currentUser()) {
+    sendKeepAlive();
+    setInterval(sendKeepAlive, KEEPALIVE_INTERVAL);
+  } else {
+    console.log("⏳ En attente de session utilisateur...");
+    setTimeout(waitForUserAndStartKeepAlive, 1000);
+  }
+}
+
+waitForUserAndStartKeepAlive();
