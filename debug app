@@ -1,0 +1,24 @@
+Je comprends 😓
+Pas de panique — voici uniquement les lignes à modifier (rien d’autre).
+
+Dans ton app.py, dans la fonction disconnect() :
+
+🔴 Remplace les 4 premières lignes de la fonction
+(celles qui commencent juste après def disconnect():)
+par ces 6 lignes :
+
+username = ""
+    data = {}
+
+    try:
+        if request.data:
+            data = json.loads(request.data.decode("utf-8"))
+    except Exception as e:
+        app.logger.warning(f"[disconnect] JSON invalide: {e}")
+
+    username = (data.get("user") or "").strip().lower()
+    req_type = (data.get("type") or "").lower()
+
+✅ Ne touche à rien d’autre dans le reste du bloc.
+Ça suffit pour éviter l’erreur "username not defined" sans rien casser du reste.
+
