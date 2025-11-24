@@ -1,0 +1,31 @@
+inactivityTimer = setTimeout(() => {
+    const user = currentUser();
+    if (!user) return;
+
+    // 1. Arrêter les keepAlive
+    if (window.keepAliveIntervalId) {
+        clearInterval(window.keepAliveIntervalId);
+    }
+
+    // 2. Reset demo-app
+    resetDemoApp(() => {
+
+        // 3. Dire au dashboard : "timeout"
+        try {
+            navigator.sendBeacon(`${dashboard_url}/disconnect`,
+                JSON.stringify({ user, type: "timeout" })
+            );
+        } catch (e) {
+            fetch(`${dashboard_url}/disconnect`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ user, type: "timeout" }),
+                keepalive: true
+            });
+        }
+
+        // 4. Purge session locale + redirection
+        sessionStorage.clear();
+        window.location.href = `${dashboard_url}/`;
+    });
+}, LOGOUT_DELAY);
